@@ -75,6 +75,12 @@ cleanup () {
 }
 
 # main
+
+if (( $# != 1 )) || [[ $@ =~ --help ]]; then
+   echo "usage: $0 <support_script_archive>"
+   exit 1
+fi
+
 shopt -s nocasematch
 set -o pipefail
 red="$(tput setaf 1)"
