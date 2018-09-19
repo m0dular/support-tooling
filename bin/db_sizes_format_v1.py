@@ -4,7 +4,7 @@ from __future__ import print_function
 import sys, json, traceback
 
 """
-Parses several files related to database size and usage from the v1 support script and formats them as json
+Script to parse several files related to database size and usage from the v1 support script and format them as json
 files: [resources/db_relation_sizes.txt, resources/db_sizes_from_du.txt]
 """
 
