@@ -11,7 +11,6 @@ v1_modules_parse() {
    elif [[ -e "$1/enterprise/find/_opt_puppetlabs.txt" && -e "$1/enterprise/find/_etc_puppetlabs.txt" ]]; then
       enterprise_mods=($(grep -o '/opt/puppetlabs/puppet/modules/[^/]*' "$1/enterprise/find/_opt_puppetlabs.txt"  | sort -u))
       enterprise_mods=("${enterprise_mods[@]//\/opt\/puppetlabs\/puppet\/modules\/}")
-      echo "enterprise_mods: ${enterprise_mods[@]}"
 
       envs=($(grep -o '/etc/puppetlabs/code/environments/[^/]*' "$1/enterprise/find/_etc_puppetlabs.txt" | sort -u))
       env_mods=($(grep -o '/etc/puppetlabs/code/environments/[^/]*/modules/[^/]*/' "$1/enterprise/find/_etc_puppetlabs.txt" | sort -u))
