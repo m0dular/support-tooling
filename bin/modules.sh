@@ -33,6 +33,8 @@ for env in "${envs[@]}"; do
    echo -n "${env##*/}:" >>"$_modules_temp"
 
    for mod in "${env_mods[@]}"; do
+      # Remove optional trailing slash in module name
+      mod=${mod%/}
       [[ $mod =~ ^$env ]] && echo -n "${mod##*/}|" >>"$_modules_temp"
    done
 
