@@ -17,7 +17,7 @@ v1_db_parse() {
       db="${fields[0]}"; table="${fields[1]}";
       # Convert human readable sizes output by pg_size_pretty into those numfmt can understand
       # e.g. 1600 bytes --> 1600, 16kB --> 16K
-      size="${fields[-1]}"; size="${size//bytes/}"; size="${size//b/}"
+      size="${fields[-1]}"; size="${size//bytes/}"; size="${size//[bB]/}"
       size="$(echo "${size^^}" | numfmt --from=iec)"
 
       echo "${db}|${table}|${size}" >>"$db_sizes_temp"
