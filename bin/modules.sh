@@ -46,3 +46,7 @@ done
 
 }
 
+# Starting with v3 we should always have this
+v3_modules_parse() {
+  jq -cM 'map(. + { "total_modules": .modules | length })' <"$1/enterprise/puppetserver_modules.json" || fail "couldn't create json"
+}
