@@ -36,6 +36,10 @@ def format_du_sizes(lines):
         fields = line.split("|")
         db, size = fields[0], int(fields[1])
 
+        # We may get a database from du that wasn't in the relational file
+        if db not in databases:
+            databases[db] = {}
+
         databases[db]['du_size'] = size
 
 

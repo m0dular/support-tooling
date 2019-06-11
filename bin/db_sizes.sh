@@ -1,16 +1,21 @@
 v1_db_parse() {
-   # Parse and format db_relation_sizes.txt
-   db_sizes="$1/resources/db_relation_sizes.txt"
-   [[ -e $db_sizes ]] || fail "couldn't find db_relation_sizes.txt"
+   # Parse and format db relation sizes. File differs between versions
+   if [[ -e "$1/resources/db_relation_sizes.txt" ]]; then
+     db_sizes="$1/resources/db_relation_sizes.txt"
+   elif [[ -e "$1/resources/db_relation_sizes_from_psql.txt" ]]; then
+     db_sizes="$1/resources/db_relation_sizes_from_psql.txt"
+   else
+     fail "No suitable relation sizes file found"
+   fi
 
    # Get a unique list of database names from the first column, i.e. starting with pe
-   dbs=($(awk -F '|' '{ print $1 }' <"$db_sizes" | grep '^[[:space:]]*pe' | sort -u))
+   dbs=($(awk -F '|' '{ print $1 }' <"$db_sizes" | grep '^[[:space:]]*pe' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | sort -u))
 
    db_sizes_temp="$(mktemp)"
    temp_files+=("$db_sizes_temp")
 
    # Iterate over every line of the file containing table info
-   mapfile -t lines < <(sed -n "/^[[:space:]]*pe/p" "$db_sizes")
+   mapfile -t lines < <(sed -n "/^[[:space:]]\+pe/p" "$db_sizes")
    for line in "${lines[@]}"; do
       IFS='|' read -ra fields <<<"${line//\ /}"
 
@@ -24,8 +29,15 @@ v1_db_parse() {
 
    done
 
-   # Parse and format db_sizes_from_du.txt
-   du_sizes="$1/resources/db_sizes_from_du.txt"
+   # Parse and format db sizes from_du. File differs between versions
+   if [[ -e "$1/resources/db_sizes_from_du.txt" ]]; then
+     du_sizes="$1/resources/db_sizes_from_du.txt"
+   elif [[ -e "$1/resources/db_table_sizes_from_du.txt" ]]; then
+     du_sizes="$1/resources/db_sizes_from_du.txt"
+   else
+     fail "No suitable du table sizes file found"
+   fi
+
    [[ -e $du_sizes ]] || fail "couldn't find db_sizes_from_du.txt"
 
    du_sizes_temp="$(mktemp)"

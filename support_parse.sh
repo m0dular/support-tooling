@@ -1,20 +1,20 @@
 #!/bin/bash
 
 fail() {
-   echo "${red}$@${reset}" >&2
-   exit 1
+  echo "${red}$@${reset}" >&2
+  exit 1
 }
 
 cleanup () {
-   [[ -e $support_extract ]] && rm -rf "$support_extract"
+  [[ -e $support_extract ]] && rm -rf "$support_extract"
 
-   for f in "${temp_files[@]}"; do
-      rm -f "$f"
-   done
+  for f in "${temp_files[@]}"; do
+    rm -f "$f"
+  done
 }
 
 usage() {
-   cat <<EOF
+  cat <<EOF
 usage: $0 <job> <support_script_archive>
 <job> may be one of ${cmds[@]}
 EOF
@@ -39,44 +39,46 @@ type jq &>/dev/null || fail "jq not installed"
 
 # Only one job at a time for now...
 if (( $# != 2 )) || [[ $@ =~ --help ]]; then
-   usage
-   exit 1
+  usage
+  exit 1
 fi
 
 job="$1"
 [[ " ${cmds[@]} " =~ " $job " ]] || {
-   usage
-   fail "ERROR: invalid job name $job"
+  usage
+  fail "ERROR: invalid job name $job"
 }
 
 support_gz="$2"
 [[ -e $support_gz ]] || fail "couldn't find support extract"
 
 support_extract="$(mktemp -d)"
-# Strip the toplevel directory of the extract and put it directly in out temp dir so we don't have to worry about the name
+# Strip the toplevel directory of the extract and put it directly in our temp dir so we don't have to worry about the name
 tar -xf "$support_gz" -C "$support_extract" --strip-components=1 || fail "failed to extract archive"
 
-# Assume v1 support script if no metadata.json or empty ticket field
-# TODO: how will this work
+# Assume v1 support script if no metadata.json or empty v3 field
 if [[ -e $support_extract/metadata.json ]]; then
-   ticket="$(jq '.ticket' <"$support_extract/metadata.json")" || fail "couldn't extract metadata"
+  v3="$(jq '.v3' <"$support_extract/metadata.json")" || fail "couldn't extract metadata"
 else
-   ticket=
+  v3=
 fi
 
+# This processing only differs in file names, so we'll only have one function for now
 case "$job" in
-   db_sizes)
-      case "$ticket" in
-         *)
-            v1_db_parse "$support_extract"
-      esac ;;
+  db_sizes)
+    case "$v3" in
+      *)
+        v1_db_parse "$support_extract"
+    esac ;;
 
-   modules)
-      case "$ticket" in
-         *)
-            v1_modules_parse "$support_extract"
-      esac ;;
+  modules)
+    case "$v3" in
+      "true")
+        v3_modules_parse "$support_extract"
+        ;;
+      *)
+        v1_modules_parse "$support_extract"
+    esac ;;
+  esac
 
-esac
-
-exit
+  exit
