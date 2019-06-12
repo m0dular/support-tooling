@@ -27,7 +27,7 @@ red="$(tput setaf 1)"
 reset="$(tput sgr0)"
 declare -A db_names db_tables du_dbs
 temp_files=()
-cmds=("db_sizes" "modules")
+cmds=("db_sizes" "modules" "tech_check")
 
 trap 'cleanup' ERR SIGINT SIGKILL SIGTERM EXIT
 
@@ -79,6 +79,14 @@ case "$job" in
       *)
         v1_modules_parse "$support_extract"
     esac ;;
+  tech_check)
+    case "$v3" in
+      "true")
+        v3_tech_check_parse "$support_extract"
+        ;;
+      *)
+        v1_tech_check_parse "$support_extract"
+    esac
   esac
 
   exit
