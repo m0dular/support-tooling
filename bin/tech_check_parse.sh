@@ -33,12 +33,11 @@ _messages_parse() {
 }
 
 _logs_parse() {
-  find "$1" -type f -name "*log" -exec grep -hs 'WARN' {} \+ | \
-    awk '{gsub(/^.*WARN[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' | sort -rn | jq -nR '{log_warnings: [inputs]}'
+  find "$1" -name "metrics" -prune -o -type f -name "*log" -exec \
+    awk '$2 ~ /^WARN/ || $3 ~ /^WARN/ {gsub(/^.*WARN[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' {} \+ | sort -rn | jq -nR '{log_warnings: [inputs]}'
 
-  find "$1" -type f -name "*log" -exec grep -hs 'ERROR' {} \+ | \
-    awk '{gsub(/^.*ERROR[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' | sort -rn | jq -nR '{log_errors: [inputs]}'
-
+  find "$1" -name "metrics" -prune -o -type f -name "*log" -exec \
+    awk '$2 == "ERROR" || $3 == "ERROR" {gsub(/^.*ERROR[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' {} \+ | sort -rn | jq -nR '{log_errors: [inputs]}'
 }
 
 _v1_largest_dirs() {
@@ -51,6 +50,20 @@ _v3_largest_dirs() {
 
 _df_parse() {
   sed -n 1p "$1"; sort -nrk 5 <(sed 1d "$1" )
+}
+
+_thundering_herd_most() {
+  sed -n '1,2p' "$1"; sed -n '/^[[:space:]]*[[:digit:]]\+/p' "$1" | sort -nr -k 9 | head
+}
+
+_thundering_herd_least() {
+  sed -n '1,2p' "$1"; sed -n '/^[[:space:]]*[[:digit:]]\+/p' "$1" | sort -nr -k 9 | tail
+}
+
+_ooms() {
+  find "$1" -type f -name "*_gc.log*" -prune -o \
+    \( -name "messages*" -o -name "syslog*" -o -name "*log" \) \
+    -exec zgrep -isE 'outofmem|out of memory' {} \+ | jq -nR '{"OOMS": [inputs]}'
 }
 
 v1_tech_check_parse() {
@@ -89,6 +102,14 @@ v1_tech_check_parse() {
   _df_parse "$1/resources/df_output.txt" | jq -nR '{"Disk Usage": [inputs]}'
 
   jq -nR '{"Memory Usage": [inputs]}' < "$1/resources/free_mem.txt"
+
+  _thundering_herd_most "$1/enterprise/thundering_herd_query.txt" | \
+    jq -nR '{"Most check-ins": [inputs]}'
+
+  _thundering_herd_least "$1/enterprise/thundering_herd_query.txt" | \
+    jq -nR '{"Least check-ins": [inputs]}'
+
+  _ooms "$1/logs"
 
   _logs_parse "$1/logs/"
 
@@ -130,6 +151,14 @@ v3_tech_check_parse() {
   _df_parse "$1/resources/df_h_output.txt" | jq -nR '{"Disk Usage": [inputs]}'
 
   jq -nR '{"Memory Usage": [inputs]}' < "$1/resources/free_h.txt"
+
+  _thundering_herd_most "$1/enterprise/thundering_herd.txt" | \
+    jq -nR '{"Most check-ins": [inputs]}'
+
+  _thundering_herd_least "$1/enterprise/thundering_herd.txt" | \
+    jq -nR '{"Least check-ins": [inputs]}'
+
+  _ooms "$1/var/log"
 
   _logs_parse "$1/var/log"
 
