@@ -53,11 +53,11 @@ _df_parse() {
 }
 
 _thundering_herd_most() {
-  sed -n '1,2p' "$1"; sed -n '/^[[:space:]]*[[:digit:]]\+/p' "$1" | sort -nr -k 9 | head
+  sed -n '1,2p' "$1"; sed -n '/^[[:space:]]*[[:digit:]]/p' "$1" | sort -nr -k 9 | head
 }
 
 _thundering_herd_least() {
-  sed -n '1,2p' "$1"; sed -n '/^[[:space:]]*[[:digit:]]\+/p' "$1" | sort -nr -k 9 | tail
+  sed -n '1,2p' "$1"; sed -n '/^[[:space:]]*[[:digit:]]/p' "$1" | sort -nr -k 9 | tail
 }
 
 _ooms() {
