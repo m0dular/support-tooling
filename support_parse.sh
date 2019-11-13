@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 fail() {
   echo "${red}$@${reset}" >&2
@@ -25,7 +25,7 @@ shopt -s nocasematch
 set -o pipefail
 red="$(tput setaf 1)"
 reset="$(tput sgr0)"
-declare -A db_names db_tables du_dbs
+#declare -A db_names db_tables du_dbs
 temp_files=()
 cmds=("db_sizes" "modules" "tech_check")
 
