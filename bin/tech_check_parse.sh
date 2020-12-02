@@ -24,28 +24,28 @@ _messages_parse() {
   # Would be nice if zcat didn't care if the file were compressed or not, like zgrep
   # Be more like zgrep, zcat
   if [[ $_messages_gz ]]; then
-    zcat "$_messages_gz" | awk 'BEGIN{IGNORECASE=1} $5 ~ "puppet" { err = substr($0, index($0, $6)); if (err ~ /(error|failure|severe|exception)/) print err }'
+    zcat "$_messages_gz" | gawk 'BEGIN{IGNORECASE=1} $5 ~ "puppet" { err = substr($0, index($0, $6)); if (err ~ /(error|failure|severe|exception)/) print err }'
   elif [[ $_messages ]]; then
-    awk 'BEGIN{IGNORECASE=1} $5 ~ "puppet" { err = substr($0, index($0, $6)); if (err ~ /(error|fail|severe|exception)/) print err }' "$_messages"
+    gawk 'BEGIN{IGNORECASE=1} $5 ~ "puppet" { err = substr($0, index($0, $6)); if (err ~ /(error|fail|severe|exception)/) print err }' "$_messages"
   else
     echo "No messages log found"
-  fi | awk '{ sub(/\[.*\]/,""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' | sort -rn | jq -nR '{syslog_errors: [inputs]}'
+  fi | gawk '{ sub(/\[.*\]/,""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' | sort -rn | jq -nR '{syslog_errors: [inputs]}'
 }
 
 _logs_parse() {
   find "$1" -name "metrics" -prune -o -type f -name "*log" -exec \
-    awk '$2 ~ /^WARN/ || $3 ~ /^WARN/ {gsub(/^.*WARN[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' {} \+ | sort -rn | jq -nR '{log_warnings: [inputs]}'
+    gawk '$2 ~ /^WARN/ || $3 ~ /^WARN/ {gsub(/^.*WARN[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' {} \+ | sort -rn | jq -nR '{log_warnings: [inputs]}'
 
   find "$1" -name "metrics" -prune -o -type f -name "*log" -exec \
-    awk '$2 == "ERROR" || $3 == "ERROR" {gsub(/^.*ERROR[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' {} \+ | sort -rn | jq -nR '{log_errors: [inputs]}'
+    gawk '$2 == "ERROR" || $3 == "ERROR" {gsub(/^.*ERROR[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' {} \+ | sort -rn | jq -nR '{log_errors: [inputs]}'
 }
 
 _v1_largest_dirs() {
-  gunzip -c "$1" | awk '$3 ~ /^-/ { m = match($11, /\/[^/]*$/); sizes[substr($11,0,m)]+=$7 } END { for (s in sizes) print sizes[s]," ", s }' | sort -n -r -k 1 | head | numfmt --to=si
+  gunzip -c "$1" | gawk '$3 ~ /^-/ { m = match($11, /\/[^/]*$/); sizes[substr($11,0,m)]+=$7 } END { for (s in sizes) print sizes[s]," ", s }' | sort -n -r -k 1 | head | numfmt --to=si
 }
 
 _v3_largest_dirs() {
-  awk -v RS= '{ split($0, dirs, "\n"); d = substr(dirs[1], 1, length(dirs[1]) -1); for (i=3; i<length(dirs); i++) { n = split(dirs[i], fields, " ");  if (fields[n] != "." && fields[n] != "..") sizes[d] += fields[5]} } END { for (s in sizes) print sizes[s], s}' "$1" | sort -rn | head | numfmt --to=si
+  gawk -v RS= '{ split($0, dirs, "\n"); d = substr(dirs[1], 1, length(dirs[1]) -1); for (i=3; i<length(dirs); i++) { n = split(dirs[i], fields, " ");  if (fields[n] != "." && fields[n] != "..") sizes[d] += fields[5]} } END { for (s in sizes) print sizes[s], s}' "$1" | sort -rn | head | numfmt --to=si
 }
 
 _df_parse() {
@@ -73,7 +73,7 @@ v1_tech_check_parse() {
   exec 3>&1
   exec >"$tech_check_tmp"
 
-  jq -n '{"Server Version": $server[].values.pe_server_version}' \
+  jq -n '{"Server Version": $server[].pe_server_version}' \
     --slurpfile server "$1/system/facter_output.json" || echo '{"pe_server_version": "error"}'
   jq -n '{"Infrastructure": [$infra[] | .[] | del(.status.metrics) | {display_name, server, state}]}' \
     --slurpfile infra "$1/enterprise/pe_infra_status.json" || echo '{"Infrastructure status": "error"}'

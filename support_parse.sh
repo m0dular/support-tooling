@@ -6,17 +6,16 @@ fail() {
 }
 
 cleanup () {
-  [[ -e $support_extract ]] && rm -rf "$support_extract"
-
   for f in "${temp_files[@]}"; do
-    rm -f "$f"
+    rm -rf "$f"
   done
 }
 
 usage() {
   cat <<EOF
-usage: $0 <job> <support_script_archive>
+usage: $0 <job> <support_script_location>
 <job> may be one of ${cmds[@]}
+<support_script_location> may be a .tar.gz or directory
 EOF
 }
 
@@ -49,12 +48,18 @@ job="$1"
   fail "ERROR: invalid job name $job"
 }
 
-support_gz="$2"
-[[ -e $support_gz ]] || fail "couldn't find support extract"
+support_file="$2"
+[[ -e $support_file ]] || fail "couldn't find support extract"
 
-support_extract="$(mktemp -d)"
-# Strip the toplevel directory of the extract and put it directly in our temp dir so we don't have to worry about the name
-tar -xf "$support_gz" -C "$support_extract" --strip-components=1 || fail "failed to extract archive"
+if [[ ${support_file##*.} == "gz" ]]; then
+
+  support_extract="$(mktemp -d)"
+  # Strip the toplevel directory of the extract and put it directly in our temp dir so we don't have to worry about the name
+  tar -xf "$support_file" -C "$support_extract" --strip-components=1 || fail "failed to extract archive"
+  temp_files+=("$support_extract")
+else
+  support_extract=$support_file
+fi
 
 # Assume v1 support script if no metadata.json or empty v3 field
 if [[ -e $support_extract/metadata.json ]]; then
