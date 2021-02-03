@@ -24,7 +24,7 @@ _messages_parse() {
   # Would be nice if zcat didn't care if the file were compressed or not, like zgrep
   # Be more like zgrep, zcat
   if [[ $_messages_gz ]]; then
-    zcat "$_messages_gz" | gawk 'BEGIN{IGNORECASE=1} $5 ~ "puppet" { err = substr($0, index($0, $6)); if (err ~ /(error|failure|severe|exception)/) print err }'
+    gunzip -c "$_messages_gz" | gawk 'BEGIN{IGNORECASE=1} $5 ~ "puppet" { err = substr($0, index($0, $6)); if (err ~ /(error|failure|severe|exception)/) print err }'
   elif [[ $_messages ]]; then
     gawk 'BEGIN{IGNORECASE=1} $5 ~ "puppet" { err = substr($0, index($0, $6)); if (err ~ /(error|fail|severe|exception)/) print err }' "$_messages"
   else
