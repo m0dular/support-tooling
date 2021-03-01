@@ -17,5 +17,5 @@ Currently implemented jobs are
 * modules
 * tech_check
 
-json output can be converted to HTML with some basic styling by saving to a file and passing the filename as an argument to `convert.py`
+json output can be converted to HTML with some basic styling by saving to a file and passing the filename as an argument to `convert.py`.  The required Python libraries can be installed with `pip install -r requirements.txt`.
 
