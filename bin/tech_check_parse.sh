@@ -73,7 +73,7 @@ v1_tech_check_parse() {
   exec 3>&1
   exec >"$tech_check_tmp"
 
-  gsed -n -e '/DEBUG/{n;h;b};H;${x;p}' "$1/system/facter_output.json" |\
+  awk 'seen { print } $0 == "{" { seen="true"; print }' "$1/system/facter_output.json" |\
     jq '{"Server Version": .pe_server_version}' \
     || echo '{"pe_server_version": "error"}'
   jq -n '{"Infrastructure": [$infra[] | .[] | del(.status.metrics) | {display_name, server, state}]}' \
