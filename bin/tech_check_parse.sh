@@ -38,6 +38,10 @@ logs_parse() {
     gawk '$2 == "ERROR" || $3 == "ERROR" {gsub(/^.*ERROR[[:alnum:]]*[:]*[[:space:]]*/,""); gsub(/^\[.*\][[:space:]]*/, ""); !seen[$0]++ } END { for (s in seen) print seen[s]":", s }' {} \+ | sort -rn | jq -nR '{log_errors: [inputs]}'
 }
 
+access_parse() {
+  find "$1" -type f -name "*access*log" -exec awk -vFPAT="([^ ]+)|(\"[^\"]+\")" '$7 ~ "^5" { split($6, s, " "); split(s[2], x, "?"); seen[x[1]]++} END { for (i in seen) { print seen[i]": ", i} }' {} \+ | sort -rn | jq -nR '{access_log_errors: [inputs]}'
+}
+
 largest_dirs() {
   gunzip -c "$1" | gawk '$3 ~ /^-/ { m = match($11, /\/[^/]*$/); sizes[substr($11,0,m)]+=$7 } END { for (s in sizes) print sizes[s]," ", s }' | sort -n -r -k 1 | head | numfmt --to=si
 }
@@ -107,6 +111,8 @@ tech_check_parse() {
   ooms "$1/logs"
 
   logs_parse "$1/logs/"
+
+  access_parse "$1/logs/"
 
   messages_parse "$1"
 
