@@ -71,27 +71,13 @@ fi
 # This processing only differs in file names, so we'll only have one function for now
 case "$job" in
   db_sizes)
-    case "$v3" in
-      *)
-        v1_db_parse "$support_extract"
-    esac ;;
-
+    db_parse "$support_extract"
+    ;;
   modules)
-    case "$v3" in
-      "true")
-        v3_modules_parse "$support_extract"
-        ;;
-      *)
-        v1_modules_parse "$support_extract"
-    esac ;;
+    modules_parse "$support_extract"
+    ;;
   tech_check)
-    case "$v3" in
-      "true")
-        v3_tech_check_parse "$support_extract"
-        ;;
-      *)
-        v1_tech_check_parse "$support_extract"
-    esac
-  esac
+    tech_check_parse "$support_extract"
+esac
 
-  exit
+exit
