@@ -39,7 +39,7 @@ logs_parse() {
 }
 
 access_parse() {
-  find "$1" -type f -name "*access*log" -exec awk -vFPAT="([^ ]+)|(\"[^\"]+\")" '$7 ~ "^5" { split($6, s, " "); split(s[2], x, "?"); seen[x[1]]++} END { for (i in seen) { print seen[i]": ", i} }' {} \+ | sort -rn | jq -nR '{access_log_errors: [inputs]}'
+  find "$1" -type f -name "*access*log" -exec gawk -vFPAT="([^ ]+)|(\"[^\"]+\")" '$7 ~ "^5" { split($6, s, " "); split(s[2], x, "?"); seen[x[1]]++} END { for (i in seen) { print seen[i]": ", i} }' {} \+ | sort -rn | jq -nR '{access_log_errors: [inputs]}'
 }
 
 largest_dirs() {
